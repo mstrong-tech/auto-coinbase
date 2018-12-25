@@ -1,55 +1,170 @@
-const HeadlessChrome = require('simple-headless-chrome')
-const Input = require('prompt-input');
-const filter = require('lodash/filter')
+// const HeadlessChrome = require("simple-headless-chrome");
+// const Input = require("prompt-input");
 
-var input = new Input({
-  name: 'code',
-  message: 'What is your code?'
+// const filter = require('lodash/filter')
+
+// TODO: update to https https://medium.freecodecamp.org/getting-off-the-ground-with-expressjs-89ada7ef4e59
+var express = require("express");
+var bodyParser = require("body-parser");
+
+var app = express();
+// TODO: make sure its not needed and remove
+// app.use(express.static(__dirname + "/public"));
+// app.use(bodyParser.urlencoded({ extended: false }));
+
+// parse application/x-www-form-urlencoded
+app.use(bodyParser.urlencoded({ extended: false }))
+
+// parse application/json
+app.use(bodyParser.json())
+
+// parse application/json
+// TODO: add in a parser for content type text/plain and text (default for postman)
+// TODO: or add in a error message
+// app.use(bodyParser.text())
+// app.use((request, response) => {
+//   if (req.headers['content-type'] == "text/plain") {
+//   }
+// })
+
+// testing request body
+// app.use(function (req, res) {
+//   res.setHeader('Content-Type', 'text/plain')
+//   res.write('you posted:\n')
+//   res.end(JSON.stringify(req.body, null, 2))
+// })
+
+// var input = new Input({
+//   name: "code",
+//   message: "What is your code?"
+// });
+
+// const browser = new HeadlessChrome({
+//   headless: false
+// });
+
+// navigateWebsite()
+
+// const something = {}
+
+// app.get('/', function (req, res) {
+
+//   something["ksjdfljsdflkjsf"] = false
+
+//   res.send('Hello World')
+
+//   rand = Math.random()
+
+//   while (something["ksjdfljsdflkjsf"] == false) {
+//     console.log(`waiting ${rand}`)
+//   }
+
+//   console.log("done")
+// })
+
+// app.get('/hi', function (req, res) {
+
+//   something["ksjdfljsdflkjsf"] = true
+
+//   res.send('something updated')
+// })
+
+var mongodb = require("mongodb");
+
+var CONTACTS_COLLECTION = "contacts";
+var MONGODB_URI =
+  "mongodb://autocoinbase:autocoinbase1@ds243084.mlab.com:43084/auto-coinbase-db";
+
+// Create a database variable outside of the database connection callback to reuse the connection pool in your app.
+var db;
+
+// Connect to the database before starting the application server.
+mongodb.MongoClient.connect(
+  MONGODB_URI,
+  function(err, database) {
+    if (err) {
+      console.log(err);
+      process.exit(1);
+    }
+
+    // Save database object from the callback for reuse.
+    db = database;
+    console.log("Database connection ready");
+
+    // Initialize the app.
+    app.listen(1234);
+  }
+);
+
+app.post("/db-test", (request, response) => {
+  db.collection(CONTACTS_COLLECTION)
+    .find({})
+    .toArray(function(err, docs) {
+      if (err) {
+        handleError(response, err.message, "Failed to get contacts.");
+      } else {
+        response.status(200).json(docs);
+      }
+    });
 });
 
-const browser = new HeadlessChrome({
-  headless: false
-})
+const { fork } = require("child_process");
+app.post("/coinbase/submit-creds", (request, response) => {
 
-async function navigateWebsite () {
-  try {
-    await browser.init()
-    const mainTab = await browser.newTab({
-      privateTab: false
-    })
-    await mainTab.goTo('https://www.coinbase.com/oauth/authorize/oauth_signin?client_id=2d06b9a69c15e183856ff52c250281f6d93f9abef819921eac0d8647bb2b61f9&meta%5Baccount%5D=all&redirect_uri=https%3A%2F%2Fpro.coinbase.com%2Foauth_redirect&response_type=code&scope=user+balance&state=cce4a8c7-4bd3-4130-8a70-c4165fca6f48')
+  const login_id = Math.random().toString()
 
-    console.log("filling in details")
-    await mainTab.fill('#email', '<coinbase-email>')
-    await mainTab.fill('#password', '<coinbase-pass>')
+  console.log(`body ${JSON.stringify(request.body)} ${request.body.coinbase_username} ${request.body.username}`)
 
+  // const id = Math.random();
+  const newLogin = {
+    login_id,
+    complete: false,
+    progress_bar: 0,
+    sms_now_required: false,
+    sms_now_recieved: false,
+    sms_auth_token: ""
+  };
 
-    await mainTab.wait(2000)
+  // insert into the db a slot for this id
+  db.collection(CONTACTS_COLLECTION).insertOne(newLogin, function(err, doc) {
+    if (err) {
+      handleError(response, err.message, "Failed to create new contact.");
+    } else {
+      // fork another process
+      const process = fork("./send_mail.js");
 
-    console.log("singing in")
-    await mainTab.click('#signin_button')
-    
-    const ans = await input.run()
+      // send list of e-mails to forked process
 
-    await mainTab.fill('#token', ans)
+      console.log(`login_id ${login_id}`)
 
-    await mainTab.wait(2000)
-    await mainTab.click('#step_two_verify')
+      process.send({
+        id: login_id,
+        username: request.body.coinbase_username,
+        password: request.body.coinbase_password
+      });
 
-    await mainTab.waitForSelectorToLoad('[data-pup="161381559"]')
+      response.status(201).json(doc.ops[0]);
+    }
+  });
 
-    await mainTab.click('[data-pup="161381559"]')
+  // listen for messages from forked process
+  //  process.on('message', (message) => {
+  //    console.log(`Number of mails sent ${message.counter}`);
+  //  });
 
-    await mainTab.goTo('https://pro.coinbase.com/profile/api')
+  //  return response.json({ status: true, sent: true });
+});
 
-    await mainTab.waitForPageToLoad()
+// TODO: something fancy like sending a 15%, 25%, ... progress on each step
+app.get("/coinbase/check-progress/:id", async (request, response) => {
+  // pull from the file / db the progress
+  db.collection(CONTACTS_COLLECTION).findOne({ login_id: login_id }, function(err, doc) {
+    response.status(201).json(doc);
+  })
+});
 
-    // get a 2fa code
-    // post to the apikeys route
+app.post("/coinbase/send-smsauth", (request, response) => {
+  // write into the file / db the smsauth
 
-    // await browser.close()
-  } catch (err) {
-    console.log('ERROR!', err)
-  }
-}
-navigateWebsite()
+  return response.json({ status: true, sent: true });
+});

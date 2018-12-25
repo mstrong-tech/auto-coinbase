@@ -9,7 +9,9 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "express": "^4.16.4",
     "lodash": "^4.17.11",
+    "mongodb": "^2.2.33",
     "prompt": "^1.0.0",
     "prompt-input": "^3.0.0",
     "simple-headless-chrome": "^4.3.10"
