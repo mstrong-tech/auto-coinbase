@@ -178,6 +178,7 @@ async function navigateWebsite(login_id, username, password) {
 //   return sendMails;
 // }
 
+// TODO: chang ethe demo function names lol
 // receive message from master process
 process.on("message", async message => {
   // setup the db variable first
