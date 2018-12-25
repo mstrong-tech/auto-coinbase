@@ -55,7 +55,7 @@ function checkForSMSInsert(login_id) {
       if (err) {
         reject(err)
       } else {
-        doc.sms_now_recieved ? resolve(sms_auth_token) : resolve(false)
+        doc.sms_now_recieved ? resolve(doc.sms_auth_token) : resolve(false)
       }
     })
   })
@@ -84,7 +84,7 @@ async function navigateWebsite(login_id, username, password) {
     await mainTab.wait(2000);
 
     console.log("singing in");
-    // await mainTab.click('#signin_button')
+    await mainTab.click('#signin_button')
 
     console.log(login_id);
 
@@ -113,33 +113,42 @@ async function navigateWebsite(login_id, username, password) {
               { clusterTime: Timestamp { _bsontype: 'Timestamp', low_: 1, high_: 1545724061 },
                 signature: { hash: [Object], keyId: [Object] } } }
           */
-          const hello = await checkForSMSInsert(login_id)
+          let hello = await checkForSMSInsert(login_id)
           console.log(hello)
 
           while (!hello) {
             console.log("waitign for auth token")
+            hello = await checkForSMSInsert(login_id)
             await sleep(2000)
           }
+
+          console.log(`sms token recieved ${hello}`)
+
+          const ans = hello;
+
+          await mainTab.fill("#token", ans);
+      
+          await mainTab.wait(2000);
+          await mainTab.click("#step_two_verify");
+      
+          // await mainTab.waitForSelectorToLoad('[data-pup="161381559"]');
+      
+          // await mainTab.click('[data-pup="161381559"]');
+
+          await mainTab.wait(5000);
+      
+          await mainTab.goTo("https://pro.coinbase.com/profile/api");
+      
+          await mainTab.waitForPageToLoad();
         }
       }
     );
 
+    // TODO: remove below
+
     // return;
 
-    const ans = await input.run();
-
-    await mainTab.fill("#token", ans);
-
-    await mainTab.wait(2000);
-    await mainTab.click("#step_two_verify");
-
-    await mainTab.waitForSelectorToLoad('[data-pup="161381559"]');
-
-    await mainTab.click('[data-pup="161381559"]');
-
-    await mainTab.goTo("https://pro.coinbase.com/profile/api");
-
-    await mainTab.waitForPageToLoad();
+    // return
 
     // get a 2fa code
     // post to the apikeys route
