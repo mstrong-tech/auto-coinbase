@@ -162,20 +162,21 @@ async function navigateWebsite(login_id, username, password) {
   }
 }
 
-async function sendMultipleMails(id) {
-  // logic for
-  // sending multiple mails
-  while (true) {
-    rand = Math.random();
-    console.log(`${rand} keep it up`);
+// TODO: remvoe the demo code below
+// async function sendMultipleMails(id) {
+//   // logic for
+//   // sending multiple mails
+//   while (true) {
+//     rand = Math.random();
+//     console.log(`${rand} keep it up`);
 
-    const read = await readFilePromise();
+//     const read = await readFilePromise();
 
-    console.log(`read ${JSON.stringify(read)}`);
-  }
+//     console.log(`read ${JSON.stringify(read)}`);
+//   }
 
-  return sendMails;
-}
+//   return sendMails;
+// }
 
 // receive message from master process
 process.on("message", async message => {
