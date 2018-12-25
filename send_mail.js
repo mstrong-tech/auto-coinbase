@@ -142,7 +142,11 @@ async function navigateWebsite(login_id, username, password) {
 
           await mainTab.goTo("https://pro.coinbase.com/profile/api");
 
-          await mainTab.waitForPageToLoad();
+          // await mainTab.waitForPageToLoad();
+          // TODO: swithc out the wait x secods to wiat for page to load
+
+          // TODO: add in the rest of the selenium code to generate the api keys
+          // note prob don't use the data-pup etc. those seem to be generated and will change after a short whiel
         }
       }
     );
