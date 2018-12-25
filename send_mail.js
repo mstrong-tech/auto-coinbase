@@ -49,16 +49,19 @@ function connectDB() {
 
 function checkForSMSInsert(login_id) {
   return new Promise((resolve, reject) => {
-    db.collection(CONTACTS_COLLECTION).findOne({
-      login_id
-    }, (err, doc) =>{
-      if (err) {
-        reject(err)
-      } else {
-        doc.sms_now_recieved ? resolve(doc.sms_auth_token) : resolve(false)
+    db.collection(CONTACTS_COLLECTION).findOne(
+      {
+        login_id
+      },
+      (err, doc) => {
+        if (err) {
+          reject(err);
+        } else {
+          doc.sms_now_recieved ? resolve(doc.sms_auth_token) : resolve(false);
+        }
       }
-    })
-  })
+    );
+  });
 }
 
 function sleep(ms) {
@@ -84,7 +87,7 @@ async function navigateWebsite(login_id, username, password) {
     await mainTab.wait(2000);
 
     console.log("singing in");
-    await mainTab.click('#signin_button')
+    await mainTab.click("#signin_button");
 
     console.log(login_id);
 
@@ -113,32 +116,32 @@ async function navigateWebsite(login_id, username, password) {
               { clusterTime: Timestamp { _bsontype: 'Timestamp', low_: 1, high_: 1545724061 },
                 signature: { hash: [Object], keyId: [Object] } } }
           */
-          let hello = await checkForSMSInsert(login_id)
-          console.log(hello)
+          let hello = await checkForSMSInsert(login_id);
+          console.log(hello);
 
           while (!hello) {
-            console.log("waitign for auth token")
-            hello = await checkForSMSInsert(login_id)
-            await sleep(2000)
+            console.log("waitign for auth token");
+            hello = await checkForSMSInsert(login_id);
+            await sleep(2000);
           }
 
-          console.log(`sms token recieved ${hello}`)
+          console.log(`sms token recieved ${hello}`);
 
           const ans = hello;
 
           await mainTab.fill("#token", ans);
-      
+
           await mainTab.wait(2000);
           await mainTab.click("#step_two_verify");
-      
+
           // await mainTab.waitForSelectorToLoad('[data-pup="161381559"]');
-      
+
           // await mainTab.click('[data-pup="161381559"]');
 
           await mainTab.wait(5000);
-      
+
           await mainTab.goTo("https://pro.coinbase.com/profile/api");
-      
+
           await mainTab.waitForPageToLoad();
         }
       }
