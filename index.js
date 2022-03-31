@@ -174,7 +174,7 @@ app.post("/coinbase/submit-creds", (request, response) => {
 });
 
 // TODO: something fancy like sending a 15%, 25%, ... progress on each step
-// request body {login_id: "ho ho ho"}
+// request body {login_id: "test"}
 app.post("/coinbase/check-progress", async (request, response) => {
   // pull from the file / db the progress
   db.collection(CONTACTS_COLLECTION).findOne(
@@ -185,7 +185,7 @@ app.post("/coinbase/check-progress", async (request, response) => {
   );
 });
 
-// request body {sms_auth_token: "<something>", login_id: "ho ho ho"}
+// request body {sms_auth_token: "<something>", login_id: "test"}
 app.post("/coinbase/send-smsauth", (request, response) => {
 
   // write into the file / db the smsauth
